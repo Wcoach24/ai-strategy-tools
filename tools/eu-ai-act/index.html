@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EU AI Act Navigator | Compliance Framework España 2026</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Herramienta interactiva para navegar el EU AI Act (Reglamento UE 2024/1689). Clasificador de riesgo, timeline de implementación, checklist de compliance y recursos para España.">
+    <meta name="keywords" content="EU AI Act, AI Act España, AESIA, Compliance IA, Regulación Inteligencia Artificial, Alto Riesgo IA, GPAI">
+    <meta name="author" content="Álvaro Zamorano">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="EU AI Act Navigator | Framework de Compliance">
+    <meta property="og:description" content="Clasificador de riesgo, timeline de implementación y checklist de compliance para el AI Act europeo.">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EU AI Act Navigator">
+    <meta name="twitter:description" content="Herramienta interactiva de compliance para el Reglamento UE 2024/1689">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .eu-gradient { background: linear-gradient(135deg, #0c1929 0%, #1a365d 50%, #0c1929 100%); }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); }
+        .gold-glow { box-shadow: 0 0 60px rgba(251, 191, 36, 0.2); }
+        .countdown-pulse { animation: countdown-pulse 2s ease-in-out infinite; }
+        @keyframes countdown-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .linkedin-gradient { background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%); }
+        .linkedin-pulse { animation: linkedin-pulse 2s ease-in-out infinite; }
+        @keyframes linkedin-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0, 119, 181, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(0, 119, 181, 0); } }
+        .modal-backdrop { background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="eu-gradient min-h-screen text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ========== CONFIGURACIÓN - PERSONALIZA TUS DATOS ==========
+        const LINKEDIN_URL = "https://www.linkedin.com/in/azmglg/";
+        const AUTHOR_NAME = "Álvaro Zamorano";
+        const AUTHOR_TITLE = "AI Strategy Consultant";
+        const AUTHOR_TAGLINE = "Ayudo a empresas a navegar la regulación de IA y prepararse para el AI Act";
+        // ============================================================
+
+        // LinkedIn Icon Component
+        const LinkedInIcon = ({ className = "w-5 h-5" }) => (
+            <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+        );
+
+        // Floating LinkedIn Button
+        const FloatingLinkedIn = () => (
+            <a
+                href={LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-6 right-6 linkedin-gradient linkedin-pulse text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform z-50 flex items-center gap-2 group"
+                title={`Conecta con ${AUTHOR_NAME}`}
+            >
+                <LinkedInIcon className="w-6 h-6" />
+                <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 whitespace-nowrap">
+                    Conectar
+                </span>
+            </a>
+        );
+
+        // Conversion Modal
+        const ConversionModal = ({ isOpen, onClose, resultLevel }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4" onClick={onClose}>
+                    <div className="bg-slate-900 rounded-3xl p-8 max-w-md w-full border border-slate-700 shadow-2xl fade-in" onClick={e => e.stopPropagation()}>
+                        <div className="text-center">
+                            <div className="w-20 h-20 linkedin-gradient rounded-full flex items-center justify-center mx-auto mb-6">
+                                <LinkedInIcon className="w-10 h-10 text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-3">
+                                ¿Te ha sido útil esta herramienta?
+                            </h3>
+                            <p className="text-slate-400 mb-6">
+                                {resultLevel === 'Alto Riesgo'
+                                    ? 'Los sistemas de alto riesgo requieren preparación intensiva. Conecta conmigo para discutir estrategias de compliance.'
+                                    : resultLevel === 'Inaceptable'
+                                    ? 'Has identificado un sistema potencialmente prohibido. Hablemos sobre alternativas y cómo pivotar tu solución.'
+                                    : 'Puedo ayudarte a profundizar en los requisitos del AI Act y preparar tu estrategia de compliance.'
+                                }
+                            </p>
+                            <a
+                                href={LINKEDIN_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-3 linkedin-gradient text-white px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all w-full justify-center text-lg mb-4"
+                            >
+                                <LinkedInIcon className="w-6 h-6" />
+                                Conectar en LinkedIn
+                            </a>
+                            <button
+                                onClick={onClose}
+                                className="text-slate-500 hover:text-slate-300 transition-colors text-sm"
+                            >
+                                Quizás más tarde
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Author Card Component
+        const AuthorCard = ({ compact = false }) => (
+            <div className={`bg-gradient-to-r from-slate-800/50 to-slate-900/50 rounded-2xl border border-slate-700 ${compact ? 'p-4' : 'p-6'} mb-6`}>
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 linkedin-gradient rounded-full flex items-center justify-center shrink-0">
+                        <span className="text-2xl font-bold text-white">AZ</span>
+                    </div>
+                    <div className="flex-1">
+                        <div className="font-semibold text-white text-lg">{AUTHOR_NAME}</div>
+                        <div className="text-slate-400 text-sm">{AUTHOR_TITLE}</div>
+                    </div>
+                    <a
+                        href={LINKEDIN_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="linkedin-gradient text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity text-sm font-medium"
+                    >
+                        <LinkedInIcon className="w-4 h-4" />
+                        Conectar
+                    </a>
+                </div>
+                {!compact && (
+                    <p className="text-slate-400 text-sm mt-3 pl-18">
+                        {AUTHOR_TAGLINE}
+                    </p>
+                )}
+            </div>
+        );
+
+        // Countdown Component
+        const Countdown = () => {
+            const [timeLeft, setTimeLeft] = useState({});
+
+            useEffect(() => {
+                const targetDate = new Date('2026-08-02T00:00:00');
+                const interval = setInterval(() => {
+                    const now = new Date();
+                    const diff = targetDate - now;
+
+                    if (diff > 0) {
+                        setTimeLeft({
+                            days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                            hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                            minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                            seconds: Math.floor((diff % (1000 * 60)) / 1000)
+                        });
+                    }
+                }, 1000);
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div className="grid grid-cols-4 gap-4 text-center">
+                    {[
+                        { value: timeLeft.days, label: 'Días' },
+                        { value: timeLeft.hours, label: 'Horas' },
+                        { value: timeLeft.minutes, label: 'Min' },
+                        { value: timeLeft.seconds, label: 'Seg' }
+                    ].map((item, i) => (
+                        <div key={i} className="bg-amber-500/20 rounded-xl p-4 border border-amber-500/30">
+                            <div className="text-3xl md:text-4xl font-bold text-amber-400">
+                                {String(item.value || 0).padStart(2, '0')}
+                            </div>
+                            <div className="text-xs text-amber-300/70 uppercase tracking-wide mt-1">{item.label}</div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const timelineData = [
+            {
+                date: '1 Ago 2024',
+                title: 'Entrada en vigor',
+                status: 'completed',
+                description: 'El Reglamento (UE) 2024/1689 entra oficialmente en vigor',
+                article: 'Art. 113',
+                details: ['20 días después de publicación en DOUE', 'Inicio del período de transición escalonado']
+            },
+            {
+                date: '2 Feb 2025',
+                title: 'Prohibiciones + AI Literacy',
+                status: 'completed',
+                description: 'Primeras obligaciones aplicables',
+                article: 'Art. 5, Art. 4',
+                details: [
+                    'Prohibición de sistemas de IA de riesgo inaceptable',
+                    'Prohibición de scoring social por autoridades públicas',
+                    'Prohibición de manipulación subliminal dañina',
+                    'Prohibición de explotación de vulnerabilidades',
+                    'Requisitos de alfabetización en IA (AI Literacy)'
+                ]
+            },
+            {
+                date: '2 Ago 2025',
+                title: 'GPAI + Gobernanza',
+                status: 'completed',
+                description: 'Modelos de propósito general + estructura regulatoria',
+                article: 'Cap. V, Art. 64-69',
+                details: [
+                    'Obligaciones para proveedores de modelos GPAI',
+                    'Documentación técnica y transparencia para GPAI',
+                    'Evaluaciones de riesgo sistémico (GPAI >10^25 FLOPs)',
+                    'Códigos de práctica vinculantes',
+                    'Designación de autoridades nacionales competentes'
+                ]
+            },
+            {
+                date: '2 Ago 2026',
+                title: 'High-Risk AI Systems',
+                status: 'upcoming',
+                description: 'Entrada en vigor COMPLETA del marco de alto riesgo',
+                article: 'Cap. III, Anexos I-VIII',
+                details: [
+                    'Sistema de gestión de riesgos obligatorio (Art. 9)',
+                    'Gobernanza de datos de entrenamiento (Art. 10)',
+                    'Documentación técnica completa (Art. 11)',
+                    'Registro automático de logs (Art. 12)',
+                    'Transparencia e información a usuarios (Art. 13)',
+                    'Supervisión humana efectiva (Art. 14)',
+                    'Precisión, robustez y ciberseguridad (Art. 15)',
+                    'Declaración de conformidad UE (Art. 47)',
+                    'Marcado CE obligatorio (Art. 48)'
+                ],
+                critical: true
+            },
+            {
+                date: '2 Ago 2027',
+                title: 'Sistemas Legacy (Anexo I)',
+                status: 'future',
+                description: 'Sistemas de IA en productos ya regulados por UE',
+                article: 'Art. 111.2',
+                details: [
+                    'Sistemas de IA en productos con marcado CE existente',
+                    'Maquinaria, dispositivos médicos, juguetes, etc.',
+                    'Aplicación a productos ya en el mercado'
+                ]
+            }
+        ];
+
+        const riskCategories = [
+            {
+                level: 'Inaceptable',
+                color: 'from-red-600 to-red-800',
+                borderColor: 'border-red-500',
+                icon: '🚫',
+                article: 'Artículo 5',
+                examples: [
+                    { text: 'Scoring social por autoridades públicas', ref: 'Art. 5.1(c)' },
+                    { text: 'Explotación de vulnerabilidades (edad, discapacidad)', ref: 'Art. 5.1(b)' },
+                    { text: 'Identificación biométrica remota en tiempo real*', ref: 'Art. 5.1(h)' },
+                    { text: 'Manipulación subliminal que cause daño significativo', ref: 'Art. 5.1(a)' },
+                    { text: 'Scraping facial masivo de internet/CCTV', ref: 'Art. 5.1(e)' },
+                    { text: 'Inferencia de emociones en trabajo/educación*', ref: 'Art. 5.1(f)' },
+                    { text: 'Categorización biométrica por características sensibles', ref: 'Art. 5.1(g)' }
+                ],
+                action: 'PROHIBIDO - No desarrollar, desplegar ni comercializar',
+                penalty: 'Hasta 35M€ o 7% facturación global'
+            },
+            {
+                level: 'Alto Riesgo',
+                color: 'from-orange-500 to-orange-700',
+                borderColor: 'border-orange-500',
+                icon: '⚠️',
+                article: 'Artículo 6 + Anexo III',
+                examples: [
+                    { text: 'Biometría e identificación de personas', ref: 'Anexo III.1' },
+                    { text: 'Infraestructuras críticas (energía, agua, tráfico)', ref: 'Anexo III.2' },
+                    { text: 'Educación y formación profesional (admisiones, evaluación)', ref: 'Anexo III.3' },
+                    { text: 'Empleo (contratación, despidos, evaluación)', ref: 'Anexo III.4' },
+                    { text: 'Servicios esenciales (crédito, seguros, emergencias)', ref: 'Anexo III.5' },
+                    { text: 'Aplicación de la ley (perfilado, evaluación de riesgos)', ref: 'Anexo III.6' },
+                    { text: 'Migración y control de fronteras', ref: 'Anexo III.7' },
+                    { text: 'Administración de justicia', ref: 'Anexo III.8' }
+                ],
+                action: 'Conformidad COMPLETA requerida antes de Agosto 2026',
+                penalty: 'Hasta 15M€ o 3% facturación global'
+            },
+            {
+                level: 'Riesgo Limitado',
+                color: 'from-yellow-500 to-yellow-600',
+                borderColor: 'border-yellow-500',
+                icon: '📋',
+                article: 'Artículos 50, 52',
+                examples: [
+                    { text: 'Chatbots y asistentes virtuales', ref: 'Art. 50.1' },
+                    { text: 'Sistemas de generación de contenido (texto, imagen, audio)', ref: 'Art. 50.2' },
+                    { text: 'Deepfakes y contenido sintético', ref: 'Art. 50.4' },
+                    { text: 'Sistemas de reconocimiento de emociones', ref: 'Art. 50.3' },
+                    { text: 'Categorización biométrica (no prohibida)', ref: 'Art. 50.3' }
+                ],
+                action: 'Obligaciones de TRANSPARENCIA - Informar claramente al usuario',
+                penalty: 'Hasta 7.5M€ o 1% facturación global'
+            },
+            {
+                level: 'Riesgo Mínimo',
+                color: 'from-green-500 to-green-600',
+                borderColor: 'border-green-500',
+                icon: '✅',
+                article: 'No regulado específicamente',
+                examples: [
+                    { text: 'Filtros de spam y correo', ref: '-' },
+                    { text: 'Videojuegos con IA', ref: '-' },
+                    { text: 'Sistemas de recomendación de contenido', ref: '-' },
+                    { text: 'Gestión de inventario y logística', ref: '-' },
+                    { text: 'Optimización de procesos internos', ref: '-' }
+                ],
+                action: 'Sin obligaciones específicas - Códigos de conducta voluntarios recomendados',
+                penalty: 'N/A'
+            }
+        ];
+
+        const complianceChecklist = [
+            {
+                category: 'Gobernanza Organizativa',
+                icon: '🏛️',
+                items: [
+                    { text: 'Designar responsable de cumplimiento AI Act (AI Officer)', critical: true, article: 'Art. 26' },
+                    { text: 'Establecer proceso formal de clasificación de riesgo', critical: true, article: 'Art. 6' },
+                    { text: 'Crear y mantener inventario de sistemas de IA', critical: true, article: 'Art. 26' },
+                    { text: 'Implementar programa de AI Literacy para empleados', critical: true, article: 'Art. 4' },
+                    { text: 'Definir y publicar política de IA responsable', critical: false, article: 'Recomendado' },
+                    { text: 'Establecer comité de ética/supervisión de IA', critical: false, article: 'Recomendado' }
+                ]
+            },
+            {
+                category: 'Alto Riesgo - Requisitos Técnicos',
+                icon: '⚙️',
+                items: [
+                    { text: 'Sistema de gestión de riesgos documentado y actualizado', critical: true, article: 'Art. 9' },
+                    { text: 'Gobernanza de datos de entrenamiento, validación y prueba', critical: true, article: 'Art. 10' },
+                    { text: 'Documentación técnica completa antes de comercialización', critical: true, article: 'Art. 11' },
+                    { text: 'Registro automático de logs durante operación', critical: true, article: 'Art. 12' },
+                    { text: 'Mecanismos de supervisión humana implementados', critical: true, article: 'Art. 14' },
+                    { text: 'Tests de precisión, robustez y ciberseguridad', critical: true, article: 'Art. 15' },
+                    { text: 'Medidas de accesibilidad para personas con discapacidad', critical: false, article: 'Art. 16' }
+                ]
+            },
+            {
+                category: 'Alto Riesgo - Requisitos de Conformidad',
+                icon: '📜',
+                items: [
+                    { text: 'Instrucciones de uso claras para deployers', critical: true, article: 'Art. 13' },
+                    { text: 'Declaración de conformidad UE firmada', critical: true, article: 'Art. 47' },
+                    { text: 'Marcado CE visible en sistema o documentación', critical: true, article: 'Art. 48' },
+                    { text: 'Registro en base de datos pública de la UE', critical: true, article: 'Art. 49' },
+                    { text: 'Sistema de vigilancia post-comercialización', critical: true, article: 'Art. 72' },
+                    { text: 'Procedimiento de reporte de incidentes graves', critical: true, article: 'Art. 73' }
+                ]
+            },
+            {
+                category: 'Transparencia (Aplica a Todos)',
+                icon: '👁️',
+                items: [
+                    { text: 'Informar a usuarios cuando interactúan con IA', critical: true, article: 'Art. 50.1' },
+                    { text: 'Etiquetar contenido generado/manipulado por IA', critical: true, article: 'Art. 50.2' },
+                    { text: 'Marcar deepfakes como artificiales (excepto arte/sátira)', critical: true, article: 'Art. 50.4' },
+                    { text: 'Hacer detectable el contenido sintético cuando sea técnicamente posible', critical: false, article: 'Art. 50.2' }
+                ]
+            },
+            {
+                category: 'GPAI (Modelos de Propósito General)',
+                icon: '🤖',
+                items: [
+                    { text: 'Documentación técnica del modelo', critical: true, article: 'Art. 53' },
+                    { text: 'Información para integradores downstream', critical: true, article: 'Art. 53' },
+                    { text: 'Política de cumplimiento de derechos de autor', critical: true, article: 'Art. 53' },
+                    { text: 'Resumen público del contenido de entrenamiento', critical: true, article: 'Art. 53' },
+                    { text: 'Evaluación de riesgos sistémicos (si >10^25 FLOPs)', critical: true, article: 'Art. 55' }
+                ]
+            }
+        ];
+
+        const resources = [
+            {
+                category: 'Textos Oficiales',
+                items: [
+                    { name: 'Reglamento (UE) 2024/1689 - Texto completo', url: 'https://eur-lex.europa.eu/eli/reg/2024/1689/oj', type: 'EUR-Lex' },
+                    { name: 'Anexos I-XIII del AI Act', url: 'https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32024R1689', type: 'EUR-Lex' },
+                    { name: 'AI Pact - Compromiso voluntario anticipado', url: 'https://digital-strategy.ec.europa.eu/en/policies/ai-pact', type: 'EC' }
+                ]
+            },
+            {
+                category: 'España - AESIA',
+                items: [
+                    { name: 'AESIA - Agencia Española de Supervisión de IA', url: 'https://aesia.digital.gob.es/', type: 'Oficial' },
+                    { name: 'Guías y recursos AESIA', url: 'https://aesia.digital.gob.es/en/guides', type: 'AESIA' },
+                    { name: 'España Digital - AESIA', url: 'https://espanadigital.gob.es/en/measure/aesia', type: 'Gobierno' }
+                ]
+            },
+            {
+                category: 'Herramientas y Guías',
+                items: [
+                    { name: 'AI Act Explorer - Future of Life Institute', url: 'https://artificialintelligenceact.eu/ai-act-explorer/', type: 'Tool' },
+                    { name: 'AI Act Compliance Checker', url: 'https://artificialintelligenceact.eu/compliance-checker/', type: 'Tool' },
+                    { name: 'ALTAI - Self Assessment (EC)', url: 'https://digital-strategy.ec.europa.eu/en/library/assessment-list-trustworthy-artificial-intelligence-altai-self-assessment', type: 'EC' },
+                    { name: 'ISO/IEC 42001 - AI Management System', url: 'https://www.iso.org/standard/81230.html', type: 'ISO' }
+                ]
+            }
+        ];
+
+        const spainSpecific = {
+            regulator: 'AESIA - Agencia Española de Supervisión de Inteligencia Artificial',
+            established: 'Agosto 2023',
+            note: 'Primera agencia de supervisión de IA en Europa',
+            location: 'A Coruña, Galicia',
+            website: 'https://aesia.digital.gob.es/',
+            law: 'Anteproyecto de Ley para el Buen Uso y Gobernanza de la IA',
+            sandbox: {
+                decree: 'Real Decreto 817/2023',
+                projects: '12 proyectos seleccionados',
+                date: 'Abril 2025'
+            },
+            penalties: [
+                { type: 'Prácticas prohibidas', amount: 'Hasta 35M€ o 7% facturación global' },
+                { type: 'Incumplimiento alto riesgo', amount: 'Hasta 15M€ o 3% facturación global' },
+                { type: 'Información incorrecta', amount: 'Hasta 7.5M€ o 1% facturación global' }
+            ]
+        };
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [checkedItems, setCheckedItems] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('euaiact-checklist');
+                    return saved ? JSON.parse(saved) : {};
+                } catch { return {}; }
+            });
+            const [classifierStep, setClassifierStep] = useState(0);
+
+            // Persist checklist to localStorage
+            useEffect(() => {
+                try {
+                    localStorage.setItem('euaiact-checklist', JSON.stringify(checkedItems));
+                } catch {}
+            }, [checkedItems]);
+            const [classifierAnswers, setClassifierAnswers] = useState({});
+            const [classificationResult, setClassificationResult] = useState(null);
+            const [expandedCategory, setExpandedCategory] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+            const [modalShown, setModalShown] = useState(false);
+
+            // Show conversion modal after classification result
+            useEffect(() => {
+                if (classificationResult && !modalShown) {
+                    const timer = setTimeout(() => {
+                        setShowModal(true);
+                        setModalShown(true);
+                    }, 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [classificationResult, modalShown]);
+
+            const toggleCheck = (category, index) => {
+                const key = `${category}-${index}`;
+                setCheckedItems(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            const getCompletionStats = () => {
+                const total = complianceChecklist.reduce((acc, cat) => acc + cat.items.length, 0);
+                const checked = Object.values(checkedItems).filter(Boolean).length;
+                const critical = complianceChecklist.reduce((acc, cat) =>
+                    acc + cat.items.filter(i => i.critical).length, 0);
+                const criticalChecked = complianceChecklist.reduce((acc, cat) =>
+                    acc + cat.items.filter((item, idx) => item.critical && checkedItems[`${cat.category}-${idx}`]).length, 0);
+                return { total, checked, critical, criticalChecked, percentage: Math.round((checked / total) * 100) };
+            };
+
+            const classifierQuestions = [
+                {
+                    id: 'product_type',
+                    question: '¿Tu sistema de IA es un producto independiente o está integrado en otro producto?',
+                    options: [
+                        { value: 'standalone', label: 'Sistema de IA independiente', desc: 'Software o servicio de IA autónomo' },
+                        { value: 'embedded', label: 'Componente de otro producto', desc: 'IA integrada en maquinaria, dispositivo médico, etc.' },
+                        { value: 'gpai', label: 'Modelo de propósito general (GPAI)', desc: 'LLM, modelo fundacional, etc.' }
+                    ]
+                },
+                {
+                    id: 'domain',
+                    question: '¿En qué dominio o sector opera principalmente tu sistema?',
+                    options: [
+                        { value: 'prohibited', label: 'Scoring social, manipulación, biometría masiva', desc: 'Potencialmente en lista de prohibiciones' },
+                        { value: 'critical', label: 'Infraestructura crítica, salud, justicia, empleo', desc: 'Sectores del Anexo III' },
+                        { value: 'consumer', label: 'Chatbots, generación de contenido, asistentes', desc: 'Interacción directa con usuarios' },
+                        { value: 'internal', label: 'Procesos internos, optimización, analytics', desc: 'Sin impacto directo en individuos' }
+                    ]
+                },
+                {
+                    id: 'impact',
+                    question: '¿Qué impacto tiene el sistema en derechos fundamentales de las personas?',
+                    options: [
+                        { value: 'severe', label: 'Afecta acceso a empleo, crédito, educación, justicia', desc: 'Decisiones que impactan significativamente la vida de personas' },
+                        { value: 'moderate', label: 'Afecta experiencia de usuario pero no derechos críticos', desc: 'Recomendaciones, personalización, asistencia' },
+                        { value: 'minimal', label: 'Impacto mínimo o nulo en individuos', desc: 'Procesos internos, optimización técnica' }
+                    ]
+                },
+                {
+                    id: 'autonomy',
+                    question: '¿Qué nivel de autonomía tiene el sistema en la toma de decisiones?',
+                    options: [
+                        { value: 'full', label: 'Decisiones automáticas sin supervisión humana', desc: 'El sistema decide y actúa autónomamente' },
+                        { value: 'assisted', label: 'Asiste o recomienda a decisores humanos', desc: 'Human-in-the-loop, el humano decide' },
+                        { value: 'automated', label: 'Automatiza tareas sin decisiones sobre personas', desc: 'Procesamiento de datos, optimización' }
+                    ]
+                },
+                {
+                    id: 'biometric',
+                    question: '¿El sistema utiliza datos biométricos o de reconocimiento?',
+                    options: [
+                        { value: 'realtime', label: 'Identificación biométrica en tiempo real', desc: 'Reconocimiento facial en espacios públicos, etc.' },
+                        { value: 'deferred', label: 'Biometría diferida o categorización', desc: 'Análisis posterior, clasificación por características' },
+                        { value: 'emotion', label: 'Reconocimiento de emociones', desc: 'Análisis de sentimientos, estados emocionales' },
+                        { value: 'none', label: 'No utiliza biometría', desc: 'Sin procesamiento de datos biométricos' }
+                    ]
+                }
+            ];
+
+            const classifySystem = () => {
+                const { product_type, domain, impact, autonomy, biometric } = classifierAnswers;
+
+                // Prohibited check
+                if (domain === 'prohibited' || biometric === 'realtime') {
+                    return setClassificationResult({
+                        level: 'Inaceptable',
+                        color: 'bg-red-600',
+                        action: 'Este sistema está potencialmente PROHIBIDO bajo el Art. 5.',
+                        details: 'Revisar excepciones específicas. Consultar con autoridad competente (AESIA).',
+                        articles: ['Art. 5', 'Considerandos 29-45'],
+                        deadline: 'Ya aplicable desde Feb 2025'
+                    });
+                }
+
+                // High-risk check
+                if (domain === 'critical' || impact === 'severe' || (autonomy === 'full' && impact !== 'minimal')) {
+                    return setClassificationResult({
+                        level: 'Alto Riesgo',
+                        color: 'bg-orange-500',
+                        action: 'Sistema clasificado como ALTO RIESGO bajo el Anexo III.',
+                        details: 'Requiere conformidad completa: gestión de riesgos, documentación técnica, supervisión humana, marcado CE.',
+                        articles: ['Art. 6', 'Art. 9-15', 'Anexo III'],
+                        deadline: '2 Agosto 2026'
+                    });
+                }
+
+                // GPAI check
+                if (product_type === 'gpai') {
+                    return setClassificationResult({
+                        level: 'GPAI',
+                        color: 'bg-purple-500',
+                        action: 'Modelo de Propósito General - Obligaciones específicas del Capítulo V.',
+                        details: 'Documentación técnica, información para integradores, política de copyright. Si >10^25 FLOPs: evaluación de riesgos sistémicos.',
+                        articles: ['Art. 51-56', 'Anexo XI-XII'],
+                        deadline: '2 Agosto 2025 (ya aplicable)'
+                    });
+                }
+
+                // Limited risk check
+                if (domain === 'consumer' || biometric === 'emotion' || biometric === 'deferred') {
+                    return setClassificationResult({
+                        level: 'Riesgo Limitado',
+                        color: 'bg-yellow-500',
+                        action: 'Sistema con obligaciones de TRANSPARENCIA.',
+                        details: 'Informar a usuarios de interacción con IA, etiquetar contenido generado, marcar deepfakes.',
+                        articles: ['Art. 50', 'Art. 52'],
+                        deadline: 'Ya aplicable'
+                    });
+                }
+
+                // Minimal risk
+                return setClassificationResult({
+                    level: 'Riesgo Mínimo',
+                    color: 'bg-green-500',
+                    action: 'Sin obligaciones específicas bajo el AI Act.',
+                    details: 'Se recomienda seguir códigos de conducta voluntarios y buenas prácticas de IA responsable.',
+                    articles: ['Art. 95'],
+                    deadline: 'N/A'
+                });
+            };
+
+            const resetClassifier = () => {
+                setClassifierStep(0);
+                setClassifierAnswers({});
+                setClassificationResult(null);
+            };
+
+            const handleClassifierAnswer = (questionId, value) => {
+                setClassifierAnswers(prev => ({ ...prev, [questionId]: value }));
+                if (classifierStep < classifierQuestions.length - 1) {
+                    setClassifierStep(classifierStep + 1);
+                } else {
+                    classifySystem();
+                }
+            };
+
+            useEffect(() => {
+                if (Object.keys(classifierAnswers).length === classifierQuestions.length && !classificationResult) {
+                    classifySystem();
+                }
+            }, [classifierAnswers]);
+
+            const stats = getCompletionStats();
+
+            const tabs = [
+                { id: 'overview', label: 'Overview', icon: '🎯' },
+                { id: 'timeline', label: 'Timeline', icon: '📅' },
+                { id: 'classifier', label: 'Clasificador', icon: '🔍' },
+                { id: 'categories', label: 'Categorías', icon: '📊' },
+                { id: 'checklist', label: 'Checklist', icon: '✅' },
+                { id: 'spain', label: 'España', icon: '🇪🇸' },
+                { id: 'resources', label: 'Recursos', icon: '📚' }
+            ];
+
+            return (
+                <div className="min-h-screen py-8 px-4">
+                    <div className="max-w-6xl mx-auto">
+                        {/* Header */}
+                        <header className="text-center mb-6">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 rounded-full text-amber-300 text-sm mb-6">
+                                <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+                                Reglamento (UE) 2024/1689
+                            </div>
+                            <div className="flex justify-center items-center gap-4 mb-4">
+                                <span className="text-5xl">🇪🇺</span>
+                                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-amber-400 to-blue-400 bg-clip-text text-transparent">
+                                    EU AI Act Navigator
+                                </h1>
+                            </div>
+                            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                                Framework interactivo de compliance para España y Europa
+                            </p>
+                        </header>
+
+                        {/* Introduction Section */}
+                        <div className="glass rounded-2xl p-6 md:p-8 border border-amber-500/20 mb-8">
+                            <div className="max-w-4xl mx-auto">
+                                <p className="text-slate-300 text-lg leading-relaxed mb-6 text-center">
+                                    El <strong className="text-amber-400">EU AI Act</strong> es el primer marco regulatorio integral de Inteligencia Artificial en el mundo. Si desarrollas, despliegas o utilizas sistemas de IA en Europa, esta herramienta te ayuda a entender y prepararte para su cumplimiento.
+                                </p>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-700/50">
+                                        <div className="text-2xl mb-2">🔍</div>
+                                        <div className="text-white font-semibold text-sm mb-1">Clasificador</div>
+                                        <div className="text-slate-400 text-xs">Identifica el nivel de riesgo de tu sistema</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-700/50">
+                                        <div className="text-2xl mb-2">📅</div>
+                                        <div className="text-white font-semibold text-sm mb-1">Timeline</div>
+                                        <div className="text-slate-400 text-xs">Fechas críticas de implementación</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-700/50">
+                                        <div className="text-2xl mb-2">✅</div>
+                                        <div className="text-white font-semibold text-sm mb-1">Checklist</div>
+                                        <div className="text-slate-400 text-xs">Requisitos de compliance interactivo</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-700/50">
+                                        <div className="text-2xl mb-2">🇪🇸</div>
+                                        <div className="text-white font-semibold text-sm mb-1">España</div>
+                                        <div className="text-slate-400 text-xs">AESIA y contexto nacional</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/30 text-center">
+                                    <span className="text-amber-300 text-sm">
+                                        ⚠️ <strong>Deadline crítico:</strong> Los sistemas de <strong>Alto Riesgo</strong> deben cumplir completamente antes del <strong>2 de Agosto de 2026</strong>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex flex-wrap justify-center gap-2 mb-8">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`px-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2 text-sm ${
+                                        activeTab === tab.id
+                                            ? 'bg-amber-500 text-slate-900 font-semibold'
+                                            : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                                    }`}
+                                >
+                                    <span>{tab.icon}</span>
+                                    <span className="hidden sm:inline">{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Overview Tab */}
+                        {activeTab === 'overview' && (
+                            <div className="space-y-8">
+                                {/* Countdown */}
+                                <div className="glass rounded-3xl p-8 border border-amber-500/30 gold-glow countdown-pulse">
+                                    <div className="text-center mb-6">
+                                        <h2 className="text-2xl font-bold text-white mb-2">
+                                            ⏰ Countdown: High-Risk AI Systems
+                                        </h2>
+                                        <p className="text-amber-300">
+                                            Fecha límite para conformidad completa de sistemas de alto riesgo
+                                        </p>
+                                    </div>
+                                    <Countdown />
+                                    <div className="text-center mt-6">
+                                        <span className="text-amber-400 font-semibold">2 de Agosto de 2026</span>
+                                    </div>
+                                </div>
+
+                                {/* Quick Stats */}
+                                <div className="grid md:grid-cols-4 gap-4">
+                                    {[
+                                        { value: '4', label: 'Categorías de Riesgo', icon: '📊' },
+                                        { value: '8', label: 'Dominios Alto Riesgo', icon: '⚠️' },
+                                        { value: '35M€', label: 'Multa Máxima', icon: '💰' },
+                                        { value: '27', label: 'Estados Miembros', icon: '🇪🇺' }
+                                    ].map((stat, i) => (
+                                        <div key={i} className="glass rounded-2xl p-6 border border-white/10 text-center">
+                                            <span className="text-3xl mb-2 block">{stat.icon}</span>
+                                            <div className="text-3xl font-bold text-white">{stat.value}</div>
+                                            <div className="text-sm text-slate-400">{stat.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Key Points */}
+                                <div className="glass rounded-2xl p-8 border border-white/10">
+                                    <h3 className="text-xl font-bold text-white mb-6">🎯 Puntos Clave del AI Act</h3>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <div className="flex gap-3">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-slate-300">Primer marco legal integral de IA en el mundo</span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-slate-300">Enfoque basado en riesgo (risk-based approach)</span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-slate-300">Aplicación extraterritorial (afecta a empresas no-UE)</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex gap-3">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-slate-300">Regulación específica para modelos GPAI (LLMs)</span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-slate-300">Sandboxes regulatorios para innovación</span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-slate-300">España: primera agencia de supervisión en Europa</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Timeline Tab */}
+                        {activeTab === 'timeline' && (
+                            <div className="glass rounded-3xl p-8 border border-white/10">
+                                <h2 className="text-2xl font-bold text-white mb-8 text-center">
+                                    Timeline de Implementación
+                                </h2>
+                                <div className="relative">
+                                    <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-green-500 via-amber-500 to-blue-500 hidden md:block" />
+
+                                    <div className="space-y-6">
+                                        {timelineData.map((item, idx) => (
+                                            <div key={idx} className="relative flex gap-6">
+                                                <div className={`w-16 h-16 rounded-full flex items-center justify-center shrink-0 z-10 text-xl font-bold ${
+                                                    item.status === 'completed' ? 'bg-green-500' :
+                                                    item.status === 'upcoming' ? 'bg-amber-500 animate-pulse' :
+                                                    'bg-blue-500'
+                                                }`}>
+                                                    {item.status === 'completed' ? '✓' :
+                                                     item.status === 'upcoming' ? '!' : '○'}
+                                                </div>
+
+                                                <div className={`flex-1 p-6 rounded-2xl ${
+                                                    item.critical
+                                                        ? 'bg-amber-500/10 border-2 border-amber-500'
+                                                        : 'bg-white/5 border border-white/10'
+                                                }`}>
+                                                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                            item.status === 'completed' ? 'bg-green-500/30 text-green-300' :
+                                                            item.status === 'upcoming' ? 'bg-amber-500/30 text-amber-300' :
+                                                            'bg-blue-500/30 text-blue-300'
+                                                        }`}>
+                                                            {item.date}
+                                                        </span>
+                                                        <span className="px-3 py-1 bg-white/10 rounded-full text-xs text-slate-300">
+                                                            {item.article}
+                                                        </span>
+                                                        {item.critical && (
+                                                            <span className="px-3 py-1 bg-red-500/30 text-red-300 rounded-full text-xs font-semibold">
+                                                                DEADLINE CRÍTICO
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h3 className="text-xl font-semibold text-white mb-2">
+                                                        {item.title}
+                                                    </h3>
+                                                    <p className="text-slate-400 mb-4">{item.description}</p>
+                                                    <ul className="space-y-2">
+                                                        {item.details.map((detail, i) => (
+                                                            <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                                                                <span className="text-amber-400">•</span>
+                                                                {detail}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Classifier Tab */}
+                        {activeTab === 'classifier' && (
+                            <div className="glass rounded-3xl p-8 border border-white/10">
+                                <h2 className="text-2xl font-bold text-white mb-2 text-center">
+                                    🔍 Clasificador de Riesgo AI Act
+                                </h2>
+                                <p className="text-slate-400 text-center mb-8">
+                                    Responde 5 preguntas para determinar las obligaciones aplicables a tu sistema
+                                </p>
+
+                                {!classificationResult ? (
+                                    <div className="max-w-2xl mx-auto">
+                                        {/* Progress */}
+                                        <div className="mb-8">
+                                            <div className="flex justify-between text-sm text-slate-400 mb-2">
+                                                <span>Pregunta {classifierStep + 1} de {classifierQuestions.length}</span>
+                                                <span>{Math.round((classifierStep + 1) / classifierQuestions.length * 100)}%</span>
+                                            </div>
+                                            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                                                    style={{ width: `${((classifierStep + 1) / classifierQuestions.length) * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Question */}
+                                        <div className="bg-white/5 rounded-2xl p-6 mb-6">
+                                            <h3 className="text-xl font-semibold text-white mb-6">
+                                                {classifierQuestions[classifierStep].question}
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {classifierQuestions[classifierStep].options.map((opt, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => handleClassifierAnswer(classifierQuestions[classifierStep].id, opt.value)}
+                                                        className="w-full text-left p-5 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-amber-500/50 transition-all"
+                                                    >
+                                                        <div className="font-medium text-white">{opt.label}</div>
+                                                        <div className="text-sm text-slate-400 mt-1">{opt.desc}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {classifierStep > 0 && (
+                                            <button
+                                                onClick={() => setClassifierStep(classifierStep - 1)}
+                                                className="text-slate-400 hover:text-white transition-colors"
+                                            >
+                                                ← Pregunta anterior
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="max-w-2xl mx-auto">
+                                        {/* Author Card */}
+                                        <AuthorCard compact={true} />
+
+                                        <div className={`${classificationResult.color} rounded-2xl p-8 text-center mb-8`}>
+                                            <h3 className="text-3xl font-bold text-white mb-4">
+                                                {classificationResult.level}
+                                            </h3>
+                                            <p className="text-white/90 text-lg mb-4">
+                                                {classificationResult.action}
+                                            </p>
+                                            <p className="text-white/70">
+                                                {classificationResult.details}
+                                            </p>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-4 mb-8">
+                                            <div className="bg-white/5 rounded-xl p-4">
+                                                <div className="text-sm text-slate-400 mb-2">Artículos Relevantes</div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {classificationResult.articles.map((art, i) => (
+                                                        <span key={i} className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
+                                                            {art}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="bg-white/5 rounded-xl p-4">
+                                                <div className="text-sm text-slate-400 mb-2">Fecha Límite</div>
+                                                <div className="text-xl font-bold text-amber-400">
+                                                    {classificationResult.deadline}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* LinkedIn CTA Section */}
+                                        <div className="linkedin-gradient rounded-2xl p-6 mb-8">
+                                            <div className="flex flex-col md:flex-row items-center gap-4">
+                                                <div className="flex-1 text-center md:text-left">
+                                                    <h4 className="text-white font-bold text-lg mb-1">
+                                                        ¿Necesitas ayuda con el compliance?
+                                                    </h4>
+                                                    <p className="text-white/80 text-sm">
+                                                        Conecta conmigo para discutir tu estrategia de implementación del AI Act
+                                                    </p>
+                                                </div>
+                                                <a
+                                                    href={LINKEDIN_URL}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-white text-[#0077B5] px-6 py-3 rounded-xl font-semibold hover:bg-slate-100 transition-colors flex items-center gap-2 whitespace-nowrap"
+                                                >
+                                                    <LinkedInIcon className="w-5 h-5" />
+                                                    Hablemos
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={resetClassifier}
+                                            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all border border-slate-700"
+                                        >
+                                            Clasificar otro sistema →
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Categories Tab */}
+                        {activeTab === 'categories' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold text-white text-center mb-8">
+                                    Categorías de Riesgo según EU AI Act
+                                </h2>
+                                {riskCategories.map((cat, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`glass rounded-2xl overflow-hidden border ${cat.borderColor} cursor-pointer transition-all`}
+                                        onClick={() => setExpandedCategory(expandedCategory === idx ? null : idx)}
+                                    >
+                                        <div className={`bg-gradient-to-r ${cat.color} p-6`}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-4xl">{cat.icon}</span>
+                                                    <div>
+                                                        <h3 className="text-2xl font-bold text-white">{cat.level}</h3>
+                                                        <span className="text-white/70 text-sm">{cat.article}</span>
+                                                    </div>
+                                                </div>
+                                                <span className="text-white text-2xl">
+                                                    {expandedCategory === idx ? '−' : '+'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {expandedCategory === idx && (
+                                            <div className="p-6 bg-slate-900/50">
+                                                <div className="grid md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-slate-400 mb-4">EJEMPLOS Y REFERENCIAS</h4>
+                                                        <ul className="space-y-2">
+                                                            {cat.examples.map((ex, i) => (
+                                                                <li key={i} className="flex items-start gap-2 text-slate-300">
+                                                                    <span className="text-amber-400 shrink-0">•</span>
+                                                                    <span>{ex.text}</span>
+                                                                    <span className="text-slate-500 text-xs shrink-0">({ex.ref})</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <div className="bg-white/5 rounded-xl p-4">
+                                                            <h4 className="text-sm font-semibold text-slate-400 mb-2">ACCIÓN REQUERIDA</h4>
+                                                            <p className="text-white">{cat.action}</p>
+                                                        </div>
+                                                        <div className="bg-red-500/10 rounded-xl p-4 border border-red-500/30">
+                                                            <h4 className="text-sm font-semibold text-red-400 mb-2">SANCIÓN MÁXIMA</h4>
+                                                            <p className="text-white font-semibold">{cat.penalty}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Checklist Tab */}
+                        {activeTab === 'checklist' && (
+                            <div className="space-y-6">
+                                <div className="glass rounded-2xl p-6 border border-white/10">
+                                    <div className="flex flex-wrap justify-between items-center gap-4">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-white">
+                                                Checklist de Compliance
+                                            </h2>
+                                            <p className="text-slate-400 text-sm mt-1">
+                                                {stats.criticalChecked}/{stats.critical} requisitos críticos completados
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-4xl font-bold text-amber-400">
+                                                {stats.percentage}%
+                                            </div>
+                                            <div className="text-sm text-slate-400">
+                                                {stats.checked}/{stats.total} total
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 h-3 bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-amber-500 to-green-500 transition-all duration-500"
+                                            style={{ width: `${stats.percentage}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {complianceChecklist.map((category, catIdx) => (
+                                    <div key={catIdx} className="glass rounded-2xl border border-white/10 overflow-hidden">
+                                        <div className="p-4 bg-white/5 border-b border-white/10">
+                                            <h3 className="text-lg font-bold text-white flex items-center gap-3">
+                                                <span>{category.icon}</span>
+                                                {category.category}
+                                            </h3>
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            {category.items.map((item, itemIdx) => {
+                                                const key = `${category.category}-${itemIdx}`;
+                                                return (
+                                                    <button
+                                                        key={itemIdx}
+                                                        onClick={() => toggleCheck(category.category, itemIdx)}
+                                                        className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all ${
+                                                            checkedItems[key]
+                                                                ? 'bg-green-500/10 border border-green-500/30'
+                                                                : 'bg-slate-800/30 border border-slate-700 hover:border-slate-600'
+                                                        }`}
+                                                    >
+                                                        <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 ${
+                                                            checkedItems[key]
+                                                                ? 'bg-green-500 border-green-500'
+                                                                : 'border-slate-600'
+                                                        }`}>
+                                                            {checkedItems[key] && <span className="text-white text-sm">✓</span>}
+                                                        </div>
+                                                        <span className={`flex-1 text-left ${
+                                                            checkedItems[key] ? 'text-green-300 line-through' : 'text-white'
+                                                        }`}>
+                                                            {item.text}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 shrink-0">{item.article}</span>
+                                                        {item.critical && (
+                                                            <span className="px-2 py-1 bg-red-500/20 text-red-300 text-xs rounded-full shrink-0">
+                                                                CRÍTICO
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Spain Tab */}
+                        {activeTab === 'spain' && (
+                            <div className="space-y-6">
+                                <div className="glass rounded-3xl p-8 border border-white/10">
+                                    <div className="flex items-center gap-6 mb-8">
+                                        <span className="text-6xl">🇪🇸</span>
+                                        <div>
+                                            <h2 className="text-3xl font-bold text-white">España: Líder en Implementación</h2>
+                                            <p className="text-amber-400 font-medium">{spainSpecific.note}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                                        <div className="bg-white/5 rounded-2xl p-6">
+                                            <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                                                <span>🏛️</span> AESIA
+                                            </h3>
+                                            <ul className="space-y-3 text-slate-300">
+                                                <li><strong className="text-white">Nombre:</strong> {spainSpecific.regulator}</li>
+                                                <li><strong className="text-white">Establecida:</strong> {spainSpecific.established}</li>
+                                                <li><strong className="text-white">Ubicación:</strong> {spainSpecific.location}</li>
+                                                <li>
+                                                    <strong className="text-white">Web:</strong>{' '}
+                                                    <a href={spainSpecific.website} target="_blank" className="text-blue-400 hover:underline">
+                                                        aesia.digital.gob.es
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="bg-white/5 rounded-2xl p-6">
+                                            <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                                                <span>🧪</span> Sandbox Regulatorio
+                                            </h3>
+                                            <ul className="space-y-3 text-slate-300">
+                                                <li><strong className="text-white">Decreto:</strong> {spainSpecific.sandbox.decree}</li>
+                                                <li><strong className="text-white">Proyectos:</strong> {spainSpecific.sandbox.projects}</li>
+                                                <li><strong className="text-white">Fecha:</strong> {spainSpecific.sandbox.date}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-red-500/10 rounded-2xl p-6 border border-red-500/30">
+                                        <h3 className="text-lg font-semibold text-red-400 mb-4 flex items-center gap-2">
+                                            <span>⚠️</span> Régimen Sancionador
+                                        </h3>
+                                        <div className="grid md:grid-cols-3 gap-4">
+                                            {spainSpecific.penalties.map((p, i) => (
+                                                <div key={i} className="bg-slate-900/50 rounded-xl p-4">
+                                                    <div className="text-sm text-slate-400 mb-1">{p.type}</div>
+                                                    <div className="text-lg font-bold text-white">{p.amount}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="glass rounded-2xl p-8 border border-white/10">
+                                    <h3 className="text-xl font-bold text-white mb-6">Ventajas Competitivas de España</h3>
+                                    <div className="grid md:grid-cols-4 gap-4">
+                                        {[
+                                            { icon: '🥇', text: 'Primera agencia supervisora en Europa' },
+                                            { icon: '🧪', text: 'Sandbox regulatorio operativo' },
+                                            { icon: '📋', text: 'Guías prácticas publicadas' },
+                                            { icon: '🤝', text: 'Colaboración activa con industria' }
+                                        ].map((item, i) => (
+                                            <div key={i} className="bg-green-500/10 rounded-xl p-4 text-center border border-green-500/20">
+                                                <span className="text-3xl mb-2 block">{item.icon}</span>
+                                                <p className="text-white text-sm font-medium">{item.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Resources Tab */}
+                        {activeTab === 'resources' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold text-white text-center mb-8">
+                                    📚 Recursos Oficiales y Herramientas
+                                </h2>
+                                {resources.map((section, idx) => (
+                                    <div key={idx} className="glass rounded-2xl p-6 border border-white/10">
+                                        <h3 className="text-lg font-semibold text-amber-400 mb-4">{section.category}</h3>
+                                        <div className="space-y-3">
+                                            {section.items.map((item, i) => (
+                                                <a
+                                                    key={i}
+                                                    href={item.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-between p-4 rounded-xl bg-slate-800/30 hover:bg-slate-700/30 border border-slate-700 hover:border-blue-500/50 transition-all group"
+                                                >
+                                                    <span className="text-white group-hover:text-blue-300 transition-colors">
+                                                        {item.name}
+                                                    </span>
+                                                    <span className="px-3 py-1 bg-white/10 rounded-full text-xs text-slate-400">
+                                                        {item.type} ↗
+                                                    </span>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Footer */}
+                        <footer className="mt-16 pt-8 border-t border-slate-800">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                <div className="text-center md:text-left">
+                                    <div className="text-slate-400 text-sm">
+                                        Framework basado en el Reglamento (UE) 2024/1689 y guías de AESIA
+                                    </div>
+                                    <div className="text-slate-500 text-xs mt-1">
+                                        Última actualización: Febrero 2026
+                                    </div>
+                                </div>
+                                <div className="flex flex-col items-center md:items-end gap-3">
+                                    <div className="text-white font-semibold text-lg">{AUTHOR_NAME}</div>
+                                    <div className="flex items-center gap-3 text-sm text-slate-400">
+                                        <span>{AUTHOR_TITLE}</span>
+                                    </div>
+                                    <a
+                                        href={LINKEDIN_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="linkedin-gradient text-white px-5 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity text-sm font-medium"
+                                    >
+                                        <LinkedInIcon className="w-4 h-4" />
+                                        Conectar en LinkedIn
+                                    </a>
+                                </div>
+                            </div>
+                            {/* Legal Disclaimer */}
+                            <div className="mt-6 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                                <p className="text-slate-500 text-xs text-center leading-relaxed">
+                                    <strong className="text-slate-400">Aviso legal:</strong> Esta herramienta tiene carácter informativo y educativo.
+                                    No constituye asesoramiento legal. La clasificación de riesgo final debe ser determinada por profesionales
+                                    cualificados considerando las circunstancias específicas de cada caso. Consulta con un abogado especializado
+                                    antes de tomar decisiones de compliance.
+                                </p>
+                            </div>
+                            <div className="text-center text-slate-600 text-xs mt-4">
+                                © 2026 • Herramienta de compliance para el AI Act europeo
+                            </div>
+                        </footer>
+                    </div>
+
+                    {/* Floating LinkedIn Button */}
+                    <FloatingLinkedIn />
+
+                    {/* Conversion Modal */}
+                    <ConversionModal
+                        isOpen={showModal}
+                        onClose={() => setShowModal(false)}
+                        resultLevel={classificationResult?.level}
+                    />
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
