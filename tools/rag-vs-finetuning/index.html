@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG vs Fine-tuning | Enterprise Decision Framework</title>
+    <meta name="description" content="Herramienta interactiva para decidir entre RAG y Fine-tuning en proyectos de IA generativa enterprise. Por Álvaro Zamorano, AI Strategy Consultant.">
+    <meta property="og:title" content="RAG vs Fine-tuning Decision Framework">
+    <meta property="og:description" content="Determina la arquitectura GenAI óptima para tu caso de uso en 8 preguntas">
+    <meta property="og:type" content="website">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+        .glow-blue { box-shadow: 0 0 40px rgba(59, 130, 246, 0.3); }
+        .glow-purple { box-shadow: 0 0 40px rgba(168, 85, 247, 0.3); }
+        .glow-amber { box-shadow: 0 0 40px rgba(245, 158, 11, 0.3); }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .diagram-line { stroke-dasharray: 5; animation: dash 20s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -100; } }
+        .linkedin-gradient { background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%); }
+        .cta-pulse { animation: cta-pulse 2s ease-in-out infinite; }
+        @keyframes cta-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0, 119, 181, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(0, 119, 181, 0); } }
+        .modal-backdrop { backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // LinkedIn URL - Actualizar con tu perfil real
+        const LINKEDIN_URL = "https://www.linkedin.com/in/azmglg/";
+        const AUTHOR_NAME = "Álvaro Zamorano";
+        const AUTHOR_TITLE = "AI Strategy Consultant";
+        const AUTHOR_TAGLINE = "Ayudo a empresas a implementar GenAI de forma estratégica";
+
+        // LinkedIn Icon Component
+        const LinkedInIcon = ({ className = "w-5 h-5" }) => (
+            <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+        );
+
+        // Conversion Modal Component
+        const ConversionModal = ({ isOpen, onClose, recommendation }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-black/70">
+                    <div className="bg-slate-900 rounded-3xl max-w-lg w-full p-8 border border-slate-700 relative animate-float" style={{animationDuration: '4s'}}>
+                        {/* Close button */}
+                        <button
+                            onClick={onClose}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                        >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        {/* Content */}
+                        <div className="text-center">
+                            <div className="w-20 h-20 mx-auto mb-6 rounded-full linkedin-gradient flex items-center justify-center">
+                                <LinkedInIcon className="w-10 h-10 text-white" />
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-white mb-3">
+                                ¿Te ha sido útil esta herramienta?
+                            </h3>
+
+                            <p className="text-slate-300 mb-6">
+                                Conéctate conmigo en LinkedIn para acceder a más recursos sobre GenAI enterprise, casos de uso reales y estrategias de implementación.
+                            </p>
+
+                            {/* Value Props */}
+                            <div className="bg-white/5 rounded-xl p-4 mb-6 text-left">
+                                <div className="text-sm text-slate-400 mb-3">Al conectar tendrás acceso a:</div>
+                                <ul className="space-y-2 text-sm">
+                                    <li className="flex items-center gap-2 text-slate-300">
+                                        <span className="text-green-400">✓</span>
+                                        Análisis de casos reales de RAG y Fine-tuning
+                                    </li>
+                                    <li className="flex items-center gap-2 text-slate-300">
+                                        <span className="text-green-400">✓</span>
+                                        Frameworks de evaluación y priorización de use cases
+                                    </li>
+                                    <li className="flex items-center gap-2 text-slate-300">
+                                        <span className="text-green-400">✓</span>
+                                        Actualizaciones sobre tendencias GenAI enterprise
+                                    </li>
+                                    <li className="flex items-center gap-2 text-slate-300">
+                                        <span className="text-green-400">✓</span>
+                                        Networking con profesionales de AI/ML
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* CTA Buttons */}
+                            <div className="space-y-3">
+                                <a
+                                    href={LINKEDIN_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full py-4 px-6 linkedin-gradient hover:opacity-90 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-3 cta-pulse"
+                                >
+                                    <LinkedInIcon className="w-5 h-5" />
+                                    Conectar con {AUTHOR_NAME.split(' ')[0]}
+                                </a>
+                                <button
+                                    onClick={onClose}
+                                    className="w-full py-3 text-slate-400 hover:text-white transition-colors text-sm"
+                                >
+                                    Quizás más tarde
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Floating LinkedIn Button
+        const FloatingLinkedIn = () => (
+            <a
+                href={LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-6 right-6 z-40 w-14 h-14 linkedin-gradient rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform cta-pulse"
+                title={`Conectar con ${AUTHOR_NAME}`}
+            >
+                <LinkedInIcon className="w-7 h-7 text-white" />
+            </a>
+        );
+
+        // Author Card Component
+        const AuthorCard = () => (
+            <div className="glass rounded-2xl p-6 border border-slate-700/50 mb-8">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="w-24 h-24 rounded-full linkedin-gradient flex items-center justify-center text-3xl font-bold text-white shrink-0">
+                        AZ
+                    </div>
+                    <div className="text-center md:text-left flex-1">
+                        <h3 className="text-xl font-bold text-white">{AUTHOR_NAME}</h3>
+                        <p className="text-blue-400 font-medium">{AUTHOR_TITLE}</p>
+                        <p className="text-slate-400 mt-2 text-sm">{AUTHOR_TAGLINE}</p>
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                            <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs">GenAI Strategy</span>
+                            <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs">RAG & LLMs</span>
+                            <span className="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs">MLOps</span>
+                            <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs">AI Compliance</span>
+                        </div>
+                    </div>
+                    <a
+                        href={LINKEDIN_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-6 py-3 linkedin-gradient hover:opacity-90 text-white font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0"
+                    >
+                        <LinkedInIcon className="w-5 h-5" />
+                        Conectar
+                    </a>
+                </div>
+            </div>
+        );
+
+        // Architecture Diagrams
+        const RAGDiagram = () => (
+            <svg viewBox="0 0 600 120" className="w-full h-auto">
+                <defs>
+                    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                </defs>
+                <rect x="10" y="35" width="80" height="50" rx="8" fill="url(#blueGrad)" opacity="0.8"/>
+                <text x="50" y="65" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Documents</text>
+                <path d="M95 60 L130 60" stroke="#3b82f6" strokeWidth="2" className="diagram-line"/>
+                <rect x="135" y="35" width="80" height="50" rx="8" fill="url(#blueGrad)" opacity="0.8"/>
+                <text x="175" y="58" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Vector DB</text>
+                <text x="175" y="72" textAnchor="middle" fill="white" fontSize="9" opacity="0.7">Embeddings</text>
+                <path d="M220 60 L255 60" stroke="#3b82f6" strokeWidth="2" className="diagram-line"/>
+                <rect x="260" y="35" width="80" height="50" rx="8" fill="url(#blueGrad)" opacity="0.8"/>
+                <text x="300" y="58" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Retriever</text>
+                <text x="300" y="72" textAnchor="middle" fill="white" fontSize="9" opacity="0.7">Top-K</text>
+                <path d="M345 60 L380 60" stroke="#3b82f6" strokeWidth="2" className="diagram-line"/>
+                <rect x="385" y="35" width="80" height="50" rx="8" fill="url(#blueGrad)"/>
+                <text x="425" y="58" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">LLM</text>
+                <text x="425" y="72" textAnchor="middle" fill="white" fontSize="9" opacity="0.7">+ Context</text>
+                <path d="M470 60 L505 60" stroke="#3b82f6" strokeWidth="2" className="diagram-line"/>
+                <rect x="510" y="35" width="80" height="50" rx="8" fill="#10b981"/>
+                <text x="550" y="65" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Response</text>
+                <path d="M300 10 L300 30" stroke="#fbbf24" strokeWidth="2" strokeDasharray="4"/>
+                <text x="300" y="8" textAnchor="middle" fill="#fbbf24" fontSize="10">User Query</text>
+            </svg>
+        );
+
+        const FTDiagram = () => (
+            <svg viewBox="0 0 600 120" className="w-full h-auto">
+                <defs>
+                    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#a855f7" />
+                        <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                </defs>
+                <rect x="30" y="35" width="100" height="50" rx="8" fill="url(#purpleGrad)" opacity="0.8"/>
+                <text x="80" y="58" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Base Model</text>
+                <text x="80" y="72" textAnchor="middle" fill="white" fontSize="9" opacity="0.7">GPT/Llama/etc</text>
+                <text x="155" y="65" textAnchor="middle" fill="#a855f7" fontSize="24" fontWeight="bold">+</text>
+                <rect x="180" y="35" width="100" height="50" rx="8" fill="url(#purpleGrad)" opacity="0.8"/>
+                <text x="230" y="58" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Training Data</text>
+                <text x="230" y="72" textAnchor="middle" fill="white" fontSize="9" opacity="0.7">Domain-specific</text>
+                <path d="M285 60 L340 60" stroke="#a855f7" strokeWidth="3" className="diagram-line"/>
+                <text x="312" y="50" textAnchor="middle" fill="#a855f7" fontSize="9">LoRA/Full</text>
+                <rect x="345" y="35" width="120" height="50" rx="8" fill="url(#purpleGrad)"/>
+                <text x="405" y="58" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Fine-tuned Model</text>
+                <text x="405" y="72" textAnchor="middle" fill="white" fontSize="9" opacity="0.7">Specialized</text>
+                <path d="M470 60 L505 60" stroke="#a855f7" strokeWidth="2" className="diagram-line"/>
+                <rect x="510" y="35" width="80" height="50" rx="8" fill="#10b981"/>
+                <text x="550" y="65" textAnchor="middle" fill="white" fontSize="11" fontWeight="500">Response</text>
+            </svg>
+        );
+
+        const HybridDiagram = () => (
+            <svg viewBox="0 0 600 140" className="w-full h-auto">
+                <defs>
+                    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#f97316" />
+                    </linearGradient>
+                </defs>
+                <rect x="20" y="20" width="90" height="40" rx="6" fill="#a855f7" opacity="0.8"/>
+                <text x="65" y="45" textAnchor="middle" fill="white" fontSize="10">Fine-tuned LLM</text>
+                <rect x="20" y="80" width="90" height="40" rx="6" fill="#3b82f6" opacity="0.8"/>
+                <text x="65" y="105" textAnchor="middle" fill="white" fontSize="10">RAG Pipeline</text>
+                <path d="M115 40 L200 70" stroke="#a855f7" strokeWidth="2" className="diagram-line"/>
+                <path d="M115 100 L200 70" stroke="#3b82f6" strokeWidth="2" className="diagram-line"/>
+                <rect x="205" y="45" width="80" height="50" rx="8" fill="url(#amberGrad)"/>
+                <text x="245" y="68" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Router</text>
+                <text x="245" y="82" textAnchor="middle" fill="white" fontSize="8" opacity="0.8">Query Analysis</text>
+                <path d="M290 70 L350 70" stroke="#f59e0b" strokeWidth="2" className="diagram-line"/>
+                <rect x="355" y="45" width="100" height="50" rx="8" fill="url(#amberGrad)"/>
+                <text x="405" y="68" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Orchestrator</text>
+                <text x="405" y="82" textAnchor="middle" fill="white" fontSize="8" opacity="0.8">Combine & Rank</text>
+                <path d="M460 70 L505 70" stroke="#f59e0b" strokeWidth="2" className="diagram-line"/>
+                <rect x="510" y="45" width="80" height="50" rx="8" fill="#10b981"/>
+                <text x="550" y="75" textAnchor="middle" fill="white" fontSize="10" fontWeight="500">Response</text>
+            </svg>
+        );
+
+        const questions = [
+            {
+                id: 'data_freshness',
+                question: '¿Con qué frecuencia cambian los datos/conocimiento que necesitas?',
+                icon: '🔄',
+                options: [
+                    { value: 'rag', label: 'Diaria/Semanalmente', desc: 'Datos dinámicos, noticias, precios, inventario', weight: 2 },
+                    { value: 'hybrid', label: 'Mensual/Trimestral', desc: 'Conocimiento relativamente estable', weight: 1 },
+                    { value: 'ft', label: 'Raramente o nunca', desc: 'Dominio estático, terminología fija', weight: 2 }
+                ]
+            },
+            {
+                id: 'output_format',
+                question: '¿Necesitas un formato de salida específico y consistente?',
+                icon: '📋',
+                options: [
+                    { value: 'ft', label: 'Sí, formato estructurado estricto', desc: 'JSON, tablas, taxonomías específicas', weight: 2 },
+                    { value: 'rag', label: 'Flexible, lenguaje natural', desc: 'Respuestas conversacionales, Q&A', weight: 2 },
+                    { value: 'hybrid', label: 'Ambos según el caso', desc: 'Necesito flexibilidad y estructura', weight: 1 }
+                ]
+            },
+            {
+                id: 'explainability',
+                question: '¿Es crítico poder citar las fuentes de información?',
+                icon: '📚',
+                options: [
+                    { value: 'rag', label: 'Sí, obligatorio por compliance', desc: 'Auditoría, regulación, confianza', weight: 3 },
+                    { value: 'rag', label: 'Deseable pero no crítico', desc: 'Añade valor pero no es requisito', weight: 1 },
+                    { value: 'ft', label: 'No es necesario', desc: 'El resultado importa más que la fuente', weight: 2 }
+                ]
+            },
+            {
+                id: 'data_volume',
+                question: '¿Cuánto conocimiento propietario necesitas incorporar?',
+                icon: '💾',
+                options: [
+                    { value: 'rag', label: 'Miles de documentos (>1GB)', desc: 'Knowledge base extenso, documentación completa', weight: 2 },
+                    { value: 'ft', label: 'Dataset limitado (<100MB)', desc: 'Terminología, estilo, patrones concretos', weight: 2 },
+                    { value: 'hybrid', label: 'Ambos niveles', desc: 'Documentos extensos + comportamiento específico', weight: 2 }
+                ]
+            },
+            {
+                id: 'latency',
+                question: '¿Cuáles son tus requisitos de latencia?',
+                icon: '⚡',
+                options: [
+                    { value: 'ft', label: 'Crítica (<500ms)', desc: 'Tiempo real, UX sensible, trading', weight: 2 },
+                    { value: 'rag', label: 'Tolerable (1-3s)', desc: 'Búsqueda empresarial, chatbots', weight: 1 },
+                    { value: 'rag', label: 'No es prioritario (>3s ok)', desc: 'Procesamiento batch, análisis', weight: 1 }
+                ]
+            },
+            {
+                id: 'budget',
+                question: '¿Cuál es tu presupuesto y capacidad técnica?',
+                icon: '💰',
+                options: [
+                    { value: 'rag', label: 'Limitado, equipo pequeño', desc: 'Preferencia por soluciones más simples', weight: 2 },
+                    { value: 'ft', label: 'Significativo, equipo ML dedicado', desc: 'Recursos para entrenar y mantener modelos', weight: 2 },
+                    { value: 'hybrid', label: 'Moderado, capacidad creciente', desc: 'Puedo escalar según resultados', weight: 1 }
+                ]
+            },
+            {
+                id: 'privacy',
+                question: '¿Cómo de sensibles son tus datos?',
+                icon: '🔒',
+                options: [
+                    { value: 'rag', label: 'Muy sensibles (no pueden salir)', desc: 'PII, datos financieros, salud', weight: 2 },
+                    { value: 'hybrid', label: 'Moderadamente sensibles', desc: 'Puedo usar providers con DPA', weight: 1 },
+                    { value: 'ft', label: 'Públicos o anonimizados', desc: 'Sin restricciones significativas', weight: 1 }
+                ]
+            },
+            {
+                id: 'scale',
+                question: '¿Cuál es el volumen esperado de queries?',
+                icon: '📈',
+                options: [
+                    { value: 'ft', label: 'Alto volumen (>100K/día)', desc: 'Coste por inferencia es crítico', weight: 2 },
+                    { value: 'rag', label: 'Volumen moderado (1K-100K/día)', desc: 'Balance coste-funcionalidad', weight: 1 },
+                    { value: 'rag', label: 'Bajo volumen (<1K/día)', desc: 'Flexibilidad sobre optimización', weight: 1 }
+                ]
+            }
+        ];
+
+        // Casos de uso ilustrativos por industria (ejemplos representativos del patrón)
+        const useCases = {
+            rag: [
+                { industry: 'Legal', case: 'Búsqueda en jurisprudencia y contratos', example: 'Legal AI assistants' },
+                { industry: 'Healthcare', case: 'Consulta de literatura médica actualizada', example: 'Clinical decision support' },
+                { industry: 'Finance', case: 'Análisis de reportes financieros en tiempo real', example: 'Financial terminals' },
+                { industry: 'Support', case: 'Customer service con knowledge base', example: 'Enterprise chatbots' }
+            ],
+            ft: [
+                { industry: 'Code', case: 'Asistente de código con estilo interno', example: 'Code completion tools' },
+                { industry: 'Finance', case: 'Clasificación de transacciones', example: 'Fraud detection' },
+                { industry: 'Healthcare', case: 'Extracción estructurada de historiales', example: 'Clinical NLP' },
+                { industry: 'Legal', case: 'Generación de cláusulas estándar', example: 'Contract automation' }
+            ],
+            hybrid: [
+                { industry: 'Enterprise', case: 'Asistente corporativo multidominio', example: 'Enterprise copilots' },
+                { industry: 'Research', case: 'Análisis de papers + conocimiento base', example: 'Research assistants' },
+                { industry: 'E-commerce', case: 'Recomendaciones + catálogo actualizado', example: 'Shopping assistants' },
+                { industry: 'Consulting', case: 'Propuestas con metodología + datos cliente', example: 'Professional services AI' }
+            ]
+        };
+
+        const recommendations = {
+            rag: {
+                title: 'RAG (Retrieval-Augmented Generation)',
+                color: 'from-blue-500 to-cyan-400',
+                glowClass: 'glow-blue',
+                icon: '🔍',
+                summary: 'Tu caso de uso se beneficia principalmente de RAG',
+                benefits: [
+                    'Información siempre actualizada sin reentrenamiento',
+                    'Citación de fuentes para auditabilidad y compliance',
+                    'Menor coste de mantenimiento a largo plazo',
+                    'Datos sensibles permanecen en tu infraestructura',
+                    'Time-to-market más rápido'
+                ],
+                considerations: [
+                    'Requiere pipeline de indexación robusto',
+                    'Latencia adicional por retrieval (~200-500ms)',
+                    'Calidad depende de la estrategia de chunking y embeddings',
+                    'Puede requerir reranking para mejorar relevancia'
+                ],
+                nextSteps: [
+                    'Definir estrategia de chunking (semántico vs fixed-size)',
+                    'Seleccionar modelo de embeddings (OpenAI, Cohere, open-source)',
+                    'Elegir vector database según escala (Pinecone, Weaviate, pgvector)',
+                    'Implementar evaluación con métricas de retrieval (MRR, NDCG)'
+                ],
+                tools: ['LangChain', 'LlamaIndex', 'Pinecone', 'Weaviate', 'ChromaDB', 'Cohere Rerank'],
+                Diagram: RAGDiagram
+            },
+            ft: {
+                title: 'Fine-tuning',
+                color: 'from-purple-500 to-pink-400',
+                glowClass: 'glow-purple',
+                icon: '🎯',
+                summary: 'Tu caso de uso se beneficia principalmente de Fine-tuning',
+                benefits: [
+                    'Respuestas altamente consistentes y predecibles',
+                    'Mejor rendimiento en tareas específicas del dominio',
+                    'Menor latencia en inferencia (sin retrieval)',
+                    'Control total sobre el comportamiento del modelo',
+                    'Menor coste por query a alto volumen'
+                ],
+                considerations: [
+                    'Requiere equipo con expertise en ML/DL',
+                    'Coste de reentrenamiento periódico',
+                    'Riesgo de catastrophic forgetting',
+                    'Conocimiento estático post-entrenamiento',
+                    'Necesita dataset de entrenamiento de calidad'
+                ],
+                nextSteps: [
+                    'Preparar dataset de entrenamiento (min. 100-1000 ejemplos)',
+                    'Evaluar técnicas: Full fine-tuning vs LoRA/QLoRA',
+                    'Definir métricas de evaluación específicas del dominio',
+                    'Implementar pipeline de CI/CD para modelos'
+                ],
+                tools: ['HuggingFace', 'OpenAI Fine-tuning', 'LoRA/QLoRA', 'Axolotl', 'MLflow', 'Weights & Biases'],
+                Diagram: FTDiagram
+            },
+            hybrid: {
+                title: 'Enfoque Híbrido',
+                color: 'from-amber-500 to-orange-400',
+                glowClass: 'glow-amber',
+                icon: '⚡',
+                summary: 'Tu caso requiere combinar ambas técnicas estratégicamente',
+                benefits: [
+                    'Lo mejor de ambos mundos según el tipo de query',
+                    'Modelo fine-tuned entiende tu dominio profundamente',
+                    'RAG proporciona datos frescos y citaciones',
+                    'Flexibilidad para diferentes sub-casos de uso',
+                    'Escalabilidad gradual según madurez'
+                ],
+                considerations: [
+                    'Mayor complejidad de arquitectura y mantenimiento',
+                    'Requiere router inteligente para decidir approach',
+                    'Más componentes = más puntos de fallo potenciales',
+                    'Necesita estrategia clara de cuándo usar qué'
+                ],
+                nextSteps: [
+                    'Categorizar queries por tipo (factual vs generativo)',
+                    'Implementar router basado en clasificación de intent',
+                    'Fine-tune modelo base con conocimiento de dominio',
+                    'Configurar RAG para datos dinámicos y citaciones'
+                ],
+                tools: ['LangChain', 'LlamaIndex', 'Semantic Router', 'Custom Orchestration', 'Feature Flags'],
+                Diagram: HybridDiagram
+            }
+        };
+
+        function App() {
+            // Load saved progress from localStorage
+            const savedState = (() => {
+                try {
+                    const saved = localStorage.getItem('rag-ft-progress');
+                    return saved ? JSON.parse(saved) : null;
+                } catch { return null; }
+            })();
+
+            const [currentStep, setCurrentStep] = useState(savedState?.currentStep || 0);
+            const [answers, setAnswers] = useState(savedState?.answers || {});
+            const [showResult, setShowResult] = useState(false);
+            const [recommendation, setRecommendation] = useState(null);
+            const [scores, setScores] = useState({ rag: 0, ft: 0, hybrid: 0 });
+            const [copied, setCopied] = useState(false);
+            const [showModal, setShowModal] = useState(false);
+            const [modalShown, setModalShown] = useState(false);
+
+            // Persist progress to localStorage
+            useEffect(() => {
+                if (Object.keys(answers).length > 0 && !showResult) {
+                    try {
+                        localStorage.setItem('rag-ft-progress', JSON.stringify({ currentStep, answers }));
+                    } catch {}
+                }
+            }, [currentStep, answers, showResult]);
+
+            const handleAnswer = (questionId, value, weight) => {
+                const newAnswers = { ...answers, [questionId]: { value, weight } };
+                setAnswers(newAnswers);
+
+                if (currentStep < questions.length - 1) {
+                    setTimeout(() => setCurrentStep(currentStep + 1), 300);
+                } else {
+                    calculateResult(newAnswers);
+                }
+            };
+
+            const calculateResult = (finalAnswers) => {
+                const newScores = { rag: 0, ft: 0, hybrid: 0 };
+                Object.values(finalAnswers).forEach(({ value, weight }) => {
+                    newScores[value] += weight;
+                });
+                setScores(newScores);
+
+                let result;
+                const total = newScores.rag + newScores.ft + newScores.hybrid;
+                const ragPct = newScores.rag / total;
+                const ftPct = newScores.ft / total;
+                const hybridPct = newScores.hybrid / total;
+
+                if (hybridPct > 0.35 || (ragPct > 0.3 && ftPct > 0.3)) {
+                    result = 'hybrid';
+                } else if (ragPct > ftPct) {
+                    result = 'rag';
+                } else {
+                    result = 'ft';
+                }
+
+                setRecommendation(recommendations[result]);
+                setTimeout(() => {
+                    setShowResult(true);
+                    // Show modal after 3 seconds of viewing results
+                    if (!modalShown) {
+                        setTimeout(() => {
+                            setShowModal(true);
+                            setModalShown(true);
+                        }, 3000);
+                    }
+                }, 300);
+            };
+
+            const reset = () => {
+                setCurrentStep(0);
+                setAnswers({});
+                setShowResult(false);
+                setRecommendation(null);
+                setScores({ rag: 0, ft: 0, hybrid: 0 });
+                try { localStorage.removeItem('rag-ft-progress'); } catch {}
+            };
+
+            const copyResult = () => {
+                const text = `Mi análisis RAG vs Fine-tuning:\n\nRecomendación: ${recommendation.title}\n\nScores:\n- RAG: ${scores.rag}\n- Fine-tuning: ${scores.ft}\n- Híbrido: ${scores.hybrid}\n\nHerramienta por ${AUTHOR_NAME}: ${window.location.href}`;
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            const progress = ((currentStep + 1) / questions.length) * 100;
+            const currentQ = questions[currentStep];
+
+            return (
+                <div className="min-h-screen py-8 px-4">
+                    <FloatingLinkedIn />
+                    <ConversionModal
+                        isOpen={showModal}
+                        onClose={() => setShowModal(false)}
+                        recommendation={recommendation}
+                    />
+
+                    <div className="max-w-5xl mx-auto">
+                        {/* Header */}
+                        <header className="text-center mb-8">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 rounded-full text-blue-300 text-sm mb-6">
+                                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
+                                Enterprise GenAI Decision Framework
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                                RAG vs Fine-tuning
+                            </h1>
+                            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
+                                Determina la arquitectura óptima para tu caso de uso de IA generativa
+                            </p>
+                        </header>
+
+                        {/* Introduction Section */}
+                        <div className="glass rounded-2xl p-6 md:p-8 border border-slate-700/50 mb-10">
+                            <div className="max-w-3xl mx-auto">
+                                <p className="text-slate-300 text-lg leading-relaxed mb-6">
+                                    Una de las decisiones más críticas en proyectos de <strong className="text-white">IA Generativa enterprise</strong> es elegir entre RAG (Retrieval-Augmented Generation), Fine-tuning, o un enfoque híbrido. Cada arquitectura tiene implicaciones significativas en coste, time-to-market, mantenimiento y calidad de resultados.
+                                </p>
+
+                                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+                                        <div className="text-3xl mb-2">🎯</div>
+                                        <div className="text-white font-semibold mb-1">8 Preguntas</div>
+                                        <div className="text-slate-400 text-sm">Cuestionario estratégico basado en casos reales</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+                                        <div className="text-3xl mb-2">📊</div>
+                                        <div className="text-white font-semibold mb-1">Scoring Ponderado</div>
+                                        <div className="text-slate-400 text-sm">Algoritmo que evalúa RAG, Fine-tuning e Híbrido</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+                                        <div className="text-3xl mb-2">🚀</div>
+                                        <div className="text-white font-semibold mb-1">Recomendación + Roadmap</div>
+                                        <div className="text-slate-400 text-sm">Con justificación técnica y próximos pasos</div>
+                                    </div>
+                                </div>
+
+                                <div className="text-center">
+                                    <span className="text-slate-500 text-sm">
+                                        Ideal para CTOs, Architects, Product Managers y equipos de Data/ML evaluando opciones GenAI
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {!showResult ? (
+                            <>
+                                {/* Progress */}
+                                <div className="mb-8">
+                                    <div className="flex justify-between text-sm text-slate-400 mb-2">
+                                        <span className="flex items-center gap-2">
+                                            <span className="text-xl">{currentQ.icon}</span>
+                                            Pregunta {currentStep + 1} de {questions.length}
+                                        </span>
+                                        <span>{Math.round(progress)}%</span>
+                                    </div>
+                                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500"
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Question Card */}
+                                <div className="glass rounded-3xl p-8 mb-8 border border-slate-700/50">
+                                    <h2 className="text-2xl md:text-3xl font-semibold text-white mb-8">
+                                        {currentQ.question}
+                                    </h2>
+                                    <div className="space-y-4">
+                                        {currentQ.options.map((option, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => handleAnswer(currentQ.id, option.value, option.weight)}
+                                                className="w-full text-left p-6 rounded-2xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-500 transition-all duration-300 group"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <div className="font-semibold text-white group-hover:text-blue-300 transition-colors text-lg">
+                                                            {option.label}
+                                                        </div>
+                                                        <div className="text-sm text-slate-400 mt-1">
+                                                            {option.desc}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-slate-600 group-hover:text-blue-400 transition-colors">
+                                                        →
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Navigation */}
+                                <div className="flex justify-between items-center">
+                                    {currentStep > 0 ? (
+                                        <button
+                                            onClick={() => setCurrentStep(currentStep - 1)}
+                                            className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+                                        >
+                                            ← Anterior
+                                        </button>
+                                    ) : <div />}
+                                    <div className="flex gap-1">
+                                        {questions.map((_, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`w-3 h-3 rounded-full transition-all ${
+                                                    idx < currentStep ? 'bg-green-500' :
+                                                    idx === currentStep ? 'bg-blue-500 scale-125' :
+                                                    'bg-slate-700'
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            /* Results */
+                            <div className="space-y-8">
+                                {/* Author Card - Top of results */}
+                                <AuthorCard />
+
+                                {/* Score Summary */}
+                                <div className="glass rounded-2xl p-6 border border-slate-700/50">
+                                    <h3 className="text-sm font-semibold text-slate-400 mb-4">ANÁLISIS DE RESPUESTAS</h3>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {[
+                                            { key: 'rag', label: 'RAG', color: 'bg-blue-500' },
+                                            { key: 'ft', label: 'Fine-tuning', color: 'bg-purple-500' },
+                                            { key: 'hybrid', label: 'Híbrido', color: 'bg-amber-500' }
+                                        ].map(({ key, label, color }) => (
+                                            <div key={key} className="text-center">
+                                                <div className="text-2xl font-bold text-white">{scores[key]}</div>
+                                                <div className="text-xs text-slate-400 mb-2">{label}</div>
+                                                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${color} transition-all duration-1000`}
+                                                        style={{ width: `${(scores[key] / (scores.rag + scores.ft + scores.hybrid)) * 100}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Main Recommendation */}
+                                <div className={`bg-gradient-to-r ${recommendation.color} p-[2px] rounded-3xl ${recommendation.glowClass}`}>
+                                    <div className="bg-slate-900 rounded-3xl p-8">
+                                        <div className="flex items-start gap-6 mb-8">
+                                            <span className="text-6xl animate-float">{recommendation.icon}</span>
+                                            <div>
+                                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                                                    {recommendation.title}
+                                                </h2>
+                                                <p className="text-xl text-slate-300">
+                                                    {recommendation.summary}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Architecture Diagram */}
+                                        <div className="bg-slate-800/50 rounded-2xl p-6 mb-8">
+                                            <h3 className="text-sm font-semibold text-slate-400 mb-4">ARQUITECTURA RECOMENDADA</h3>
+                                            <recommendation.Diagram />
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                                            <div className="bg-green-500/10 rounded-2xl p-6 border border-green-500/20">
+                                                <h3 className="text-lg font-semibold text-green-400 mb-4 flex items-center gap-2">
+                                                    <span>✓</span> Beneficios
+                                                </h3>
+                                                <ul className="space-y-3">
+                                                    {recommendation.benefits.map((b, i) => (
+                                                        <li key={i} className="text-slate-300 flex items-start gap-3">
+                                                            <span className="text-green-400 mt-1">•</span>
+                                                            {b}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <div className="bg-amber-500/10 rounded-2xl p-6 border border-amber-500/20">
+                                                <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                                                    <span>⚠</span> Consideraciones
+                                                </h3>
+                                                <ul className="space-y-3">
+                                                    {recommendation.considerations.map((c, i) => (
+                                                        <li key={i} className="text-slate-300 flex items-start gap-3">
+                                                            <span className="text-amber-400 mt-1">•</span>
+                                                            {c}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        {/* Next Steps */}
+                                        <div className="bg-blue-500/10 rounded-2xl p-6 border border-blue-500/20 mb-8">
+                                            <h3 className="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                                                <span>🚀</span> Próximos Pasos
+                                            </h3>
+                                            <ol className="space-y-3">
+                                                {recommendation.nextSteps.map((step, i) => (
+                                                    <li key={i} className="text-slate-300 flex items-start gap-3">
+                                                        <span className="w-6 h-6 rounded-full bg-blue-500/30 text-blue-300 flex items-center justify-center text-sm shrink-0">
+                                                            {i + 1}
+                                                        </span>
+                                                        {step}
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </div>
+
+                                        {/* Tools */}
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-slate-400 mb-3">HERRAMIENTAS RECOMENDADAS</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {recommendation.tools.map((tool, i) => (
+                                                    <span key={i} className="px-4 py-2 bg-slate-800 rounded-full text-sm text-white border border-slate-700">
+                                                        {tool}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Use Cases */}
+                                <div className="glass rounded-2xl p-8 border border-slate-700/50">
+                                    <h3 className="text-xl font-semibold text-white mb-6">Casos de Uso Reales</h3>
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {useCases[Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b)].map((uc, i) => (
+                                            <div key={i} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                                                <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">{uc.industry}</div>
+                                                <div className="text-white font-medium mb-2">{uc.case}</div>
+                                                <div className="text-sm text-slate-400 italic">{uc.example}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* CTA Section */}
+                                <div className="linkedin-gradient rounded-2xl p-8 text-center">
+                                    <h3 className="text-2xl font-bold text-white mb-3">
+                                        ¿Necesitas ayuda implementando esta arquitectura?
+                                    </h3>
+                                    <p className="text-white/80 mb-6 max-w-xl mx-auto">
+                                        Conéctate conmigo para discutir tu caso de uso específico y cómo abordar la implementación de forma estratégica.
+                                    </p>
+                                    <a
+                                        href={LINKEDIN_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-3 px-8 py-4 bg-white text-[#0077B5] font-bold rounded-xl hover:bg-slate-100 transition-all"
+                                    >
+                                        <LinkedInIcon className="w-6 h-6" />
+                                        Conectar con {AUTHOR_NAME}
+                                    </a>
+                                </div>
+
+                                {/* Comparison Table */}
+                                <div className="glass rounded-2xl p-8 border border-slate-700/50 overflow-x-auto">
+                                    <h3 className="text-xl font-semibold text-white mb-6">Comparativa Completa</h3>
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-slate-700">
+                                                <th className="text-left py-4 px-4 text-slate-400 font-medium">Criterio</th>
+                                                <th className="text-center py-4 px-4 text-blue-400 font-medium">RAG</th>
+                                                <th className="text-center py-4 px-4 text-purple-400 font-medium">Fine-tuning</th>
+                                                <th className="text-center py-4 px-4 text-amber-400 font-medium">Híbrido</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-slate-300">
+                                            {[
+                                                ['Datos actualizados', '✅ Excelente', '❌ Estático', '✅ Con RAG'],
+                                                ['Citación de fuentes', '✅ Nativo', '❌ No disponible', '✅ Parcial'],
+                                                ['Latencia', '⚠️ +200-500ms', '✅ Mínima', '⚠️ Variable'],
+                                                ['Coste inicial', '✅ Bajo', '⚠️ Alto', '⚠️ Medio-Alto'],
+                                                ['Coste por query', '⚠️ Medio', '✅ Bajo a escala', '⚠️ Medio'],
+                                                ['Consistencia output', '⚠️ Variable', '✅ Alta', '✅ Alta'],
+                                                ['Expertise requerido', '✅ Data Eng', '⚠️ ML/DL', '⚠️ Ambos'],
+                                                ['Time to market', '✅ Rápido', '⚠️ Lento', '⚠️ Medio'],
+                                            ].map(([criterion, rag, ft, hybrid], i) => (
+                                                <tr key={i} className="border-b border-slate-800">
+                                                    <td className="py-4 px-4 text-white">{criterion}</td>
+                                                    <td className="text-center py-4 px-4">{rag}</td>
+                                                    <td className="text-center py-4 px-4">{ft}</td>
+                                                    <td className="text-center py-4 px-4">{hybrid}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex flex-wrap justify-center gap-4">
+                                    <button
+                                        onClick={reset}
+                                        className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full transition-all border border-slate-700"
+                                    >
+                                        Evaluar otro caso →
+                                    </button>
+                                    <button
+                                        onClick={copyResult}
+                                        className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition-all"
+                                    >
+                                        {copied ? '✓ Copiado!' : 'Compartir resultado'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer */}
+                        <footer className="mt-16 pt-8 border-t border-slate-800">
+                            <div className="glass rounded-2xl p-8 border border-slate-700/50 mb-8">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-full linkedin-gradient flex items-center justify-center text-2xl font-bold text-white">
+                                            AZ
+                                        </div>
+                                        <div>
+                                            <div className="text-xl font-bold text-white">{AUTHOR_NAME}</div>
+                                            <div className="text-blue-400">{AUTHOR_TITLE}</div>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={LINKEDIN_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-6 py-3 linkedin-gradient hover:opacity-90 text-white font-semibold rounded-xl transition-all flex items-center gap-2"
+                                    >
+                                        <LinkedInIcon className="w-5 h-5" />
+                                        Conectar en LinkedIn
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div className="text-center text-slate-500 text-sm">
+                                <p>Framework basado en mejores prácticas de IBM, Google, y experiencia en proyectos enterprise</p>
+                                <p className="mt-2">© 2026 {AUTHOR_NAME} • Herramienta de decisión para arquitecturas GenAI</p>
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
