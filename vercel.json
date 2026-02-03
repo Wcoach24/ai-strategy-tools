@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/rag-vs-finetuning", "destination": "/rag-vs-finetuning/index.html" },
+    { "source": "/eu-ai-act", "destination": "/eu-ai-act/index.html" }
+  ]
+}
